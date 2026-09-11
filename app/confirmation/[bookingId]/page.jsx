@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { useParams, useSearchParams, useRouter } from 'next/navigation';
 import Button from '@/components/ui/Button';
+import { cancelBookingRequest } from '@/lib/api';
 
 export default function ConfirmationPage() {
   const { bookingId } = useParams();
@@ -15,14 +16,19 @@ export default function ConfirmationPage() {
 
   const [cancelled, setCancelled] = useState(false);
   const [cancelling, setCancelling] = useState(false);
+  const [error, setError] = useState(null);
 
-  // TEMPORARY: fakes cancellation locally.
-  function handleCancel() {
+  async function handleCancel() {
     setCancelling(true);
-    setTimeout(() => {
+    setError(null);
+    try {
+      await cancelBookingRequest(bookingId);
       setCancelled(true);
+    } catch {
+      setError('Could not cancel booking. Please try again.');
+    } finally {
       setCancelling(false);
-    }, 400);
+    }
   }
 
   return (
@@ -39,6 +45,7 @@ export default function ConfirmationPage() {
           {startDate} to {endDate}
         </p>
       </div>
+      {error && <p className="text-red-600 text-sm">{error}</p>}
       {!cancelled ? (
         <Button variant="danger" onClick={handleCancel} disabled={cancelling} className="w-full">
           {cancelling ? 'Cancelling...' : 'Cancel booking'}

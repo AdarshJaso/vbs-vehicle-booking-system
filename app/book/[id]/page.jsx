@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useParams, useSearchParams, useRouter } from 'next/navigation';
 import Input from '@/components/ui/Input';
 import Button from '@/components/ui/Button';
+import { createBookingRequest } from '@/lib/api';
 
 export default function BookPage() {
   const { id } = useParams();
@@ -18,17 +19,36 @@ export default function BookPage() {
   const [customerName, setCustomerName] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [conflict, setConflict] = useState(false);
+  const [error, setError] = useState(null);
 
-  // TEMPORARY: fakes a successful booking after a delay.
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
     setSubmitting(true);
     setConflict(false);
-    setTimeout(() => {
-      const fakeBookingId = 501;
-      const params = new URLSearchParams({ start_date: startDate, end_date: endDate, make, model });
-      router.push(`/confirmation/${fakeBookingId}?${params.toString()}`);
-    }, 400);
+    setError(null);
+    try {
+      const booking = await createBookingRequest({
+        vehicle_id: Number(id),
+        start_date: startDate,
+        end_date: endDate,
+        customer_name: customerName,
+      });
+      const params = new URLSearchParams({
+        start_date: booking.start_date,
+        end_date: booking.end_date,
+        make,
+        model,
+      });
+      router.push(`/confirmation/${booking.booking_id}?${params.toString()}`);
+    } catch (err) {
+      if (err.code === 'vehicle_unavailable') {
+        setConflict(true);
+      } else {
+        setError('Something went wrong submitting your booking. Please try again.');
+      }
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return (
@@ -53,6 +73,7 @@ export default function BookPage() {
         </div>
       )}
 
+      {error && <p className="text-red-600 text-sm">{error}</p>}
       <form onSubmit={handleSubmit} className="space-y-4">
         <Input
           label="Full name"
