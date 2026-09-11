@@ -76,6 +76,7 @@ export default function BookPage() {
       {error && <p className="text-red-600 text-sm">{error}</p>}
       <form onSubmit={handleSubmit} className="space-y-4">
         <Input
+          name="customer_name"
           label="Full name"
           required
           value={customerName}

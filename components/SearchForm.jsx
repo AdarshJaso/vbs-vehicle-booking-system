@@ -36,6 +36,7 @@ export default function SearchForm({ onSearch, loading }) {
       className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3 bg-white p-4 rounded-lg shadow-sm"
     >
       <Input
+        name="start_date"
         label="Start date"
         type="date"
         required
@@ -43,6 +44,7 @@ export default function SearchForm({ onSearch, loading }) {
         onChange={(e) => setStartDate(e.target.value)}
       />
       <Input
+        name="end_date"
         label="End date"
         type="date"
         required
@@ -50,6 +52,7 @@ export default function SearchForm({ onSearch, loading }) {
         onChange={(e) => setEndDate(e.target.value)}
       />
       <Select
+        name="type"
         label="Type"
         options={TYPE_OPTIONS}
         value={type}
@@ -57,6 +60,7 @@ export default function SearchForm({ onSearch, loading }) {
       />
 
       <Select
+        name="location"
         label="Location"
         options={LOCATION_OPTIONS}
         value={location}
