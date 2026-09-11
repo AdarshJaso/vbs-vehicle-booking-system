@@ -1,36 +1,46 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# Vehicle Booking - Technical Assessment
 
-## Getting Started
+Search vehicle availability and book one, built against the mock API in the brief.
 
-First, run the development server:
+## Running it
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open http://localhost:3000. Nothing else to set up - no env vars, no DB, data lives in memory.
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+## Routes
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- `/` - search + results
+- `/book/[id]` - booking form
+- `/confirmation/[bookingId]` - confirmation + cancel
 
-## Learn More
+## Approach
 
-To learn more about Next.js, take a look at the following resources:
+I implemented the mock API as real Next.js Route Handlers instead of faking it with a plain function, so the frontend is actually hitting `fetch()` and dealing with real status codes (400, 404, 409) rather than switching on hardcoded flags.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+The conflict case is a genuine overlap check against existing bookings for that vehicle, not a random chance of failure. Booking the same car in two tabs for overlapping dates reliably produces the 409.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Every page is a Client Component. All of them are forms/mutations, so there's no real Server Component here - that's a deliberate call, not an oversight.
 
-## Deploy on Vercel
+## Trade-offs
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- There's no GET-single-vehicle endpoint in the contract, so vehicle details get passed through query params between routes instead of being re-fetched.
+- In-memory store resets on restart - fine for this, wouldn't survive a real deployment.
+- Validation is native `required` + the API's own 400s.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Reuse at scale
+
+`Button`, `Input`, `Select` live in `components/ui/` and are used everywhere instead of one-off styled elements. `lib/api.js` is the only place that talks to the API, so swapping the mock for a real backend later would only touch that one file.
+
+## AI usage
+
+Used Claude to plan and then scaffold the Route Handlers and the initial component shells, and to double-check current Next.js App Router conventions.
+
+Also caught a bug where the booking cancellation route read `params.id` directly - in the Next.js version I'm on, `context.params` is a Promise in Route Handlers, so that would've either failed or grabbed the wrong id without an obvious error. Fixed by awaiting it before use.
+
+Also used it to debug why the search flow worked in production but not on `next dev` when testing from my phone - turned out to be `localhost` binding to the machine only, not reachable from another device on the network.
+
+Wrote the vehicle-availability overlap check in `data/store.js` and the form handling/validation in the search and booking forms and the other reusable compoenents, and did the mobile layout fixes by actually checking devtools at 375px rather than guessing.
